@@ -14,7 +14,11 @@ module Temple
                      capture_generator: SafeArrayBuffer
 
       def call(exp)
-        [preamble, compile(exp), postamble].flatten.compact.join('; '.freeze)
+        [preamble, compile(exp), postamble]
+      end
+
+      def create_buffer
+        "#{buffer} = []"
       end
 
       def create_buffer
@@ -26,7 +30,7 @@ module Temple
       end
 
       def concat(str)
-        "#{buffer}.safe_concat((#{str}))"
+        "#{buffer}.append((#{str}))"
       end
     end
   end
