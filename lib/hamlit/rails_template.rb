@@ -5,16 +5,48 @@ require 'hamlit/rails_helpers'
 require 'hamlit/parser/haml_helpers'
 require 'hamlit/parser/haml_util'
 
+module Temple
+  module Generators
+    class SafeArrayBuffer < ArrayBuffer
+      define_options :streaming,
+                     buffer_class: "",
+                     buffer: "@output_buffer",
+                     capture_generator: SafeArrayBuffer
+
+      def call(exp)
+        [preamble, compile(exp), postamble].flatten.compact.join('; '.freeze)
+      end
+
+      def create_buffer
+        if options[:streaming] && options[:buffer] == '@output_buffer'
+          "#{buffer} = output_buffer || #{options[:buffer_class]}.new"
+        else
+          "#{buffer} = #{options[:buffer_class]}.new"
+        end
+      end
+
+      def concat(str)
+        "#{buffer}.safe_concat((#{str}))"
+      end
+    end
+  end
+end
+
+module ActionView
+  class OutputArrayBuffer < OutputBuffer
+  end
+end
+
 module Hamlit
   class RailsTemplate
     # Compatible with: https://github.com/judofyr/temple/blob/v0.7.7/lib/temple/mixins/options.rb#L15-L24
     class << self
       def options
         @options ||= {
-          generator:     Temple::Generators::RailsOutputBuffer,
+          generator:     Temple::Generators::SafeArrayBuffer,
           use_html_safe: true,
           streaming:     true,
-          buffer_class:  'ActionView::OutputBuffer',
+          buffer_class:  'ActionView::OutputArrayBuffer',
         }
       end
 
