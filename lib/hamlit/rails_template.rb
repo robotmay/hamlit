@@ -9,16 +9,12 @@ module Temple
   module Generators
     class SafeArrayBuffer < ArrayBuffer
       define_options :streaming,
-                     buffer_class: "",
+                     buffer_class: "ActionView::OutputArrayBuffer",
                      buffer: "@output_buffer",
                      capture_generator: SafeArrayBuffer
 
       def call(exp)
         [preamble, compile(exp), postamble]
-      end
-
-      def create_buffer
-        "#{buffer} = []"
       end
 
       def create_buffer
@@ -37,7 +33,10 @@ module Temple
 end
 
 module ActionView
-  class OutputArrayBuffer < OutputBuffer
+  class OutputArrayBuffer < Array
+    def encoding
+      first.encoding
+    end
   end
 end
 
